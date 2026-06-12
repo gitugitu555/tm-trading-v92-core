@@ -128,8 +128,8 @@ def main():
     months = sorted(list(set(months)))
     print(f"Found {len(months)} months/days to process.")
     
-    max_workers = 30
-    print(f"Launching ProcessPoolExecutor with {max_workers} workers...\n")
+    max_workers = 3
+    print(f"Launching ProcessPoolExecutor with {max_workers} workers (Safe Memory Limit)...\n")
     
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(process_month, m, symbol): m for m in months}

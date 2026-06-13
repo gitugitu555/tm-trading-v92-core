@@ -10,6 +10,7 @@ the exact same selection helper as the extraction path.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import tempfile
@@ -18,7 +19,7 @@ from pathlib import Path
 
 import polars as pl
 
-from features.v92_data_policy import discover_aggtrade_archives
+from features.v92_data_policy import discover_aggtrade_archives, discover_tier2_bar_files
 
 ROOT = Path(__file__).resolve().parents[1]
 COLD_ROOT = Path("/mnt/seagate/tm-trading-v555/data/raw")
@@ -136,36 +137,90 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=COLD_ROOT / "binance/spot/aggTrades/BTCUSDT/2020-05-22_to_2026-05-21",
     )
+    parser.add_argument("--tier2-dir", type=Path, default=HOT_OUT)
     parser.add_argument("--output-dir", type=Path, default=HOT_OUT)
     parser.add_argument(
         "--overlap-policy",
         choices=("monthly_wins", "daily_wins", "reject_overlap"),
         default="monthly_wins",
     )
+    parser.add_argument("--all-mode", choices=("all_wins", "shards_only", "reject_mixed"), default="all_wins")
     parser.add_argument("--dry-run", action="store_true", help="List selected archives and exit.")
+    parser.add_argument("--manifest-json", action="store_true", help="Emit a structured dry-run manifest as JSON.")
     return parser
 
 
-def _report_inventory(archives: list[Path], overlap_policy: str) -> None:
+def _build_manifest(args: argparse.Namespace, archive_inventory: dict, tier2_inventory: dict) -> dict:
+    errors = list(archive_inventory.get("errors", [])) + list(tier2_inventory.get("errors", []))
+    return {
+        "symbol": args.symbol,
+        "archive_search_dir": str(args.search_dir),
+        "tier2_dir": str(args.tier2_dir),
+        "overlap_policy": args.overlap_policy,
+        "all_mode": args.all_mode,
+        "selected_archives": [str(path) for path in archive_inventory.get("selected_archives", [])],
+        "selected_archive_count": archive_inventory.get("selected_archive_count", 0),
+        "selected_tier2_files": [str(path) for path in tier2_inventory.get("selected_tier2_files", [])],
+        "selected_tier2_count": tier2_inventory.get("selected_tier2_count", 0),
+        "rejected_overlaps": archive_inventory.get("rejected_overlaps", []),
+        "unsupported_filenames": archive_inventory.get("unsupported_filenames", []),
+        "errors": errors,
+        "side_effects_disabled": True,
+    }
+
+
+def _report_inventory(manifest: dict) -> None:
     print("V9.2 Tier-2 Archive Inventory")
-    print(f"Policy mode: {overlap_policy}")
-    print(f"Selected archive count: {len(archives)}")
-    for archive in archives:
+    print(f"Policy mode: {manifest['overlap_policy']}")
+    print(f"Selected archive count: {manifest['selected_archive_count']}")
+    for archive in manifest["selected_archives"]:
         print(f"  - {archive}")
+    print(f"Tier-2 mode: {manifest['all_mode']}")
+    print(f"Selected Tier-2 file count: {manifest['selected_tier2_count']}")
+    for bar_file in manifest["selected_tier2_files"]:
+        print(f"  - {bar_file}")
+    if manifest["rejected_overlaps"]:
+        print("Rejected overlaps:")
+        for overlap in manifest["rejected_overlaps"]:
+            print(f"  - {overlap}")
+    if manifest["unsupported_filenames"]:
+        print("Unsupported filenames:")
+        for filename in manifest["unsupported_filenames"]:
+            print(f"  - {filename}")
+    if manifest["errors"]:
+        print("Errors:")
+        for error in manifest["errors"]:
+            print(f"  - {error}")
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+
+    if args.dry_run:
+        archive_inventory = discover_aggtrade_archives(
+            args.search_dir,
+            args.symbol,
+            overlap_policy=args.overlap_policy,
+            return_manifest=True,
+        )
+        tier2_inventory = discover_tier2_bar_files(
+            args.tier2_dir,
+            symbol=args.symbol,
+            all_mode=args.all_mode,
+            return_manifest=True,
+        )
+        manifest = _build_manifest(args, archive_inventory, tier2_inventory)
+        if args.manifest_json:
+            print(json.dumps(manifest, indent=2, sort_keys=True))
+        else:
+            _report_inventory(manifest)
+        return 1 if manifest["errors"] else 0
 
     try:
         archives = discover_aggtrade_archives(args.search_dir, args.symbol, overlap_policy=args.overlap_policy)
     except ValueError as exc:
         print(f"Archive discovery failed: {exc}")
         return 1
-
-    if args.dry_run:
-        _report_inventory(archives, args.overlap_policy)
-        return 0
 
     print("V9.2 Tier-2 Pipeline Started.")
     print(f"Source: {args.search_dir}")

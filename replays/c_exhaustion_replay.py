@@ -26,6 +26,16 @@ import numpy as np
 import pandas as pd
 import polars as pl
 
+try:
+    from features.v92_data_policy import epoch_to_datetime_expr as _central_epoch_to_datetime_expr
+except Exception:  # Package init is not always safe in this repo.
+    _central_epoch_to_datetime_expr = None
+
+try:
+    from features.regime_classifier import add_regime_labels as _central_add_regime_labels
+except Exception:  # Package init is not always safe in this repo.
+    _central_add_regime_labels = None
+
 __all__ = [
     "CExhaustionReplayConfig",
     "CExhaustionReplayResult",
@@ -81,6 +91,8 @@ def _ensure_polars_frame(df: pl.DataFrame | pd.DataFrame) -> pl.DataFrame:
 
 
 def _normalize_epoch_expr(column: str) -> pl.Expr:
+    if _central_epoch_to_datetime_expr is not None:
+        return _central_epoch_to_datetime_expr(column)
     return (
         pl.when(pl.col(column) > 1e14)
         .then(pl.from_epoch(column, time_unit="us"))
@@ -109,7 +121,15 @@ def normalize_v92_bar_timestamps(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def _add_regime_labels(df: pl.DataFrame) -> pl.DataFrame:
-    """Local copy of the V9.2 regime labels without importing the broken package init."""
+    """Local copy of the V9.2 regime labels without importing the broken package init.
+
+    This exists only to avoid package-init side effects. It must stay parity-aligned
+    with `features.regime_classifier.add_regime_labels`, and should be deleted once
+    the package import path is safe.
+    """
+    if _central_add_regime_labels is not None:
+        return _central_add_regime_labels(df)
+
     if "bar_range" not in df.columns:
         df = df.with_columns((pl.col("high") - pl.col("low")).alias("bar_range"))
     if "body_size" not in df.columns:

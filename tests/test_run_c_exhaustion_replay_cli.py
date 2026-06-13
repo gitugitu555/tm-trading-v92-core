@@ -113,6 +113,36 @@ def test_cli_runs_and_writes_local_reports(tmp_path, monkeypatch, capsys):
     assert not (Path(cli.ROOT) / "data" / "hft" / "tier2" / "c_exhaustion_replay_summary.txt").exists()
 
 
+def test_cli_refuses_production_cache_output_path(tmp_path, monkeypatch, capsys):
+    bar_dir = tmp_path / "bars"
+    bar_dir.mkdir()
+    _write_parquet_shard(bar_dir / "chunk_0.parquet", _make_rows()[:10])
+
+    monkeypatch.setattr(cli, "ROOT", tmp_path)
+    monkeypatch.setattr(cli, "add_v92_regime_labels", lambda df: df)
+
+    blocked_output = tmp_path / "data" / "hft" / "tier2"
+    rc = cli.main(
+        [
+            "--bar-dir",
+            str(bar_dir),
+            "--output-dir",
+            str(blocked_output),
+            "--write-json",
+            "--write-csv",
+            "--write-summary",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert rc != 0
+    assert "Refused production/cache output path" in captured.err
+    assert not (blocked_output / "c_exhaustion_replay_report.json").exists()
+    assert not (blocked_output / "c_exhaustion_replay_trades.csv").exists()
+    assert not (blocked_output / "c_exhaustion_replay_summary.txt").exists()
+    assert not blocked_output.exists()
+
+
 def test_cli_fails_cleanly_on_empty_bar_dir(tmp_path, capsys):
     empty_dir = tmp_path / "empty"
     empty_dir.mkdir()
@@ -122,4 +152,3 @@ def test_cli_fails_cleanly_on_empty_bar_dir(tmp_path, capsys):
 
     assert rc == 1
     assert "No parquet files found" in captured.err
-

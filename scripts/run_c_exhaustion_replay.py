@@ -22,6 +22,12 @@ from replays.c_exhaustion_replay import (
     replay_c_exhaustionfade,
 )
 
+_PRODUCTION_OUTPUT_BLOCKLIST = (
+    "data/hft/tier2",
+    "data/hft",
+    "data/raw",
+)
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -44,6 +50,22 @@ def _load_bar_dir(bar_dir: Path) -> pl.DataFrame:
     if not files:
         raise FileNotFoundError(f"No parquet files found in {bar_dir}")
     return pl.concat([pl.scan_parquet(path) for path in files]).collect().sort("open_time")
+
+
+def _is_under(candidate: Path, parent: Path) -> bool:
+    candidate = candidate.resolve()
+    parent = parent.resolve()
+    return candidate == parent or candidate.is_relative_to(parent)
+
+
+def _refuse_production_output(output_dir: Path) -> str | None:
+    resolved_output = output_dir.expanduser().resolve()
+    repo_root = ROOT.resolve()
+    for relative in _PRODUCTION_OUTPUT_BLOCKLIST:
+        blocked_root = (repo_root / relative).resolve()
+        if _is_under(resolved_output, blocked_root):
+            return f"Refused production/cache output path: {resolved_output}"
+    return None
 
 
 def _compute_equity_metrics(
@@ -173,6 +195,11 @@ def _write_outputs(report: dict, output_dir: Path, args: argparse.Namespace, res
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    refused = _refuse_production_output(args.output_dir)
+    if refused is not None:
+        print(refused, file=sys.stderr)
+        return 2
+
     try:
         bars = _load_bar_dir(args.bar_dir)
     except FileNotFoundError as exc:
@@ -222,4 +249,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

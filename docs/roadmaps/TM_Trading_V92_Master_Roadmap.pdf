@@ -1,0 +1,436 @@
+%PDF-1.3
+%XXXX ReportLab Generated PDF document (opensource)
+1 0 obj
+<<
+/F1 2 0 R /F2 3 0 R
+>>
+endobj
+2 0 obj
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
+endobj
+3 0 obj
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
+endobj
+4 0 obj
+<<
+/Contents 10 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 9 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
+endobj
+5 0 obj
+<<
+/Contents 11 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 9 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
+endobj
+6 0 obj
+<<
+/Contents 12 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 9 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
+endobj
+7 0 obj
+<<
+/PageMode /UseNone /Pages 9 0 R /Type /Catalog
+>>
+endobj
+8 0 obj
+<<
+/Author (TM Trading Project) /CreationDate (D:20000101000000+00'00') /Creator (anonymous) /Keywords () /ModDate (D:20000101000000+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (unspecified) /Title (TM Trading V9.2 Master Roadmap) /Trapped /False
+>>
+endobj
+9 0 obj
+<<
+/Count 3 /Kids [ 4 0 R 5 0 R 6 0 R ] /Type /Pages
+>>
+endobj
+10 0 obj
+<<
+/Length 6930
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+BT /F2 17 Tf 20.4 TL ET
+BT 1 0 0 1 51.02362 790.8661 Tm (TM Trading V9.2 Master Roadmap) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 772.8661 Tm (From Research Chaos -> Clean Replay -> Verified Candidate -> Paper Trading) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 757.3661 Tm (Purpose) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 746.8661 Tm (This document is the control map for the TM Trading project. It prevents strategy work from) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 736.3661 Tm (exploding sideways across four repos, old branches, research notes, and temporary scripts.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 720.8661 Tm (1. Current Truth) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 706.8661 Tm (Canonical repo: gitugitu555/tm-trading-v92-core) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 696.3661 Tm (This is the source of truth. It contains the safety helpers, dry-run manifest work, and the merged) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 685.8661 Tm (C_ExhaustionFade replay module.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 670.3661 Tm (Supporting repos:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 659.8661 Tm (- tm-trading-v92-core: canonical tested engine.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 649.3661 Tm (- tm-trading-research: sandbox only.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 638.8661 Tm (- tm-trading-v73-current: old benchmark / forensic comparison.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 628.3661 Tm (- tm-trading-v555: legacy memory and data lineage.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 612.8661 Tm (Rule: no new canonical strategy logic goes into v555, v73-current, or research. Everything real) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 602.3661 Tm (graduates into v92-core with tests.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 586.8661 Tm (2. Strategy Status) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 572.8661 Tm (A_Breakout: RESEARCH_ONLY. It looked promising in raw surface tests, but weakened after de-overlap) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 562.3661 Tm (and effective sample checks.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 551.8661 Tm (B_Absorption: DATA_BLOCKED. It needs real OFI/L2 coverage. Do not fake it with proxy data.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 541.3661 Tm (C_ExhaustionFade: KEEP. This is the current main candidate.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 525.8661 Tm (Current C definition:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 515.3661 Tm (- bar_size: 750 BTC) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 504.8661 Tm (- regime: EXHAUSTED) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 494.3661 Tm (- side: long-only) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 483.8661 Tm (- entry: next-bar open) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 473.3661 Tm (- exit: h36 time exit) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 462.8661 Tm (- position rule: one position at a time) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 452.3661 Tm (- cost model: explicit flat round-trip bps) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 436.8661 Tm (3. What The Session Achieved) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 422.8661 Tm (The project moved from "we found something interesting in research output" to "we have a clean,) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 412.3661 Tm (tested, merged replay harness for the first surviving candidate.") Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 396.8661 Tm (Merged into master:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 386.3661 Tm (- replays/__init__.py) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 375.8661 Tm (- replays/c_exhaustion_replay.py) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 365.3661 Tm (- scripts/run_c_exhaustion_replay.py) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 354.8661 Tm (- tests/conftest.py) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 344.3661 Tm (- tests/test_c_exhaustion_replay.py) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 333.8661 Tm (- tests/test_run_c_exhaustion_replay_cli.py) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 318.3661 Tm (The CLI blocks output under:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 307.8661 Tm (- data/hft/tier2) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 297.3661 Tm (- data/hft) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 286.8661 Tm (- data/raw) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 271.3661 Tm (4. Immediate Next Mission: Reproduce Phase 1I) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 257.3661 Tm (Run the merged CLI against the validated 750 BTC parquet shards.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 241.8661 Tm (Command:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 231.3661 Tm (python scripts/run_c_exhaustion_replay.py \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 220.8661 Tm (  --bar-dir /path/to/750btc/shards \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 210.3661 Tm (  --bar-size 750 \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 199.8661 Tm (  --horizon 36 \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 189.3661 Tm (  --cost-bps 12 \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 178.8661 Tm (  --output-dir reports/c_exhaustion_replay_real_750_h36_cost12 \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 168.3661 Tm (  --write-json \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 157.8661 Tm (  --write-csv \\) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 147.3661 Tm (  --write-summary) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 131.8661 Tm (Compare against Phase 1I memory:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 121.3661 Tm (- trade_count: about 221) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 110.8661 Tm (- net_expectancy_bps: about 72.23 at cost12) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 100.3661 Tm (- profit_factor: about 2.19) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 89.86614 Tm (- sharpe: about 1.63) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 79.36614 Tm (- worst_year: 2025) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 63.86614 Tm (Decision:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 53.36614 Tm (- Close match: replay harness confirmed; commit reproduction report.) Tj T* ET
+BT /F1 8 Tf 9.6 TL ET
+BT 1 0 0 1 388.636 28.34646 Tm (TM Trading V9.2 Master Roadmap - Page 1) Tj T* ET
+ 
+endstream
+endobj
+11 0 obj
+<<
+/Length 6756
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 790.8661 Tm (- Mild mismatch: debug classifier/cost/calendar differences.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 780.3661 Tm (- Big mismatch: stop downstream work and debug before trusting the signal.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 764.8661 Tm (5. Reproduction Report Rule) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 750.8661 Tm (Commit small summaries only:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 740.3661 Tm (- reports/c_exhaustion_replay_real_750_h36_cost12_summary.md) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 729.8661 Tm (- reports/c_exhaustion_replay_real_750_h36_cost12_report.json) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 714.3661 Tm (Do not commit large CSV logs, parquet shards, raw data, or cache files.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 698.8661 Tm (6. After Reproduction: Small Robustness Grid) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 684.8661 Tm (Do not launch a huge parameter sweep. Test only the local neighborhood around C.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 669.3661 Tm (Grid:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 658.8661 Tm (- bar_size: 500, 750, 1000) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 648.3661 Tm (- horizon: 24, 36, 48) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 637.8661 Tm (- cost_bps: 5, 8, 12, 20) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 627.3661 Tm (- side: long-only only) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 616.8661 Tm (- entry: next-bar open only) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 606.3661 Tm (- exit: time exit only) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 590.8661 Tm (Goal: prove C is not a single lucky 750/h36 island.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 575.3661 Tm (Verdict:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 564.8661 Tm (- STRONG: 750/h36 reproduces and neighboring configs remain positive at cost12.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 554.3661 Tm (- CAUTION: only one island works.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 543.8661 Tm (- FAIL: reproduction or neighbors collapse.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 528.3661 Tm (7. C Candidate Graduation Ladder) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 514.3661 Tm (Gate 1 - Code safety: PASSED.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 503.8661 Tm (Gate 2 - Real replay reproduction: NEXT.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 493.3661 Tm (Gate 3 - Local robustness: NOT STARTED.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 482.8661 Tm (Gate 4 - Paper-trading simulator: NOT STARTED.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 472.3661 Tm (Gate 5 - Execution adapter: DO NOT START YET.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 456.8661 Tm (8. Do Not Build Yet) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 442.8661 Tm (Avoid these until C reproduction and robustness are done:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 432.3661 Tm (- live bot) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 421.8661 Tm (- Jarvis agent) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 411.3661 Tm (- Telegram execution) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 400.8661 Tm (- Nautilus live adapter) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 390.3661 Tm (- multi-strategy allocator) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 379.8661 Tm (- Kelly sizing) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 369.3661 Tm (- portfolio optimizer) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 358.8661 Tm (- AI decision layer) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 343.3661 Tm (9. Data Foundation Direction) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 329.3661 Tm (C can be tested with existing 750 BTC bars. B cannot be tested honestly without L2/OFI.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 313.8661 Tm (L2/OFI tasks:) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 303.3661 Tm (1. Inventory available L2 sources.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 289.3661 Tm (2. Confirm exchange, symbol, depth, date range, format, cost.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 275.3661 Tm (3. Build raw L2 schema.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 261.3661 Tm (4. Build OFI feature cache.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 247.3661 Tm (5. Add coverage-preserving joins.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 233.3661 Tm (6. Test B_Absorption only when coverage is real.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 214.3661 Tm (Rule: no OFI coverage = no B signal.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 198.8661 Tm (10. Repo Hygiene Rules) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 184.8661 Tm (Every serious change gets a branch.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 174.3661 Tm (A PR must have: single purpose, small scope, tests, no generated bytecode, no data files, no) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 163.8661 Tm (unrelated drift.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 153.3661 Tm (Merge only when: pytest passes, changed files are expected, no production write risk, no lookahead) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 142.8661 Tm (risk, no duplicated strategy truth without comment.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 127.3661 Tm (11. Indicator Research Appendix) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 113.3661 Tm (Claude is right to warn against adding indicator combos before reproduction. Indicator research is) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 102.8661 Tm (allowed only after Gate 2, and ideally after Gate 3. The goal is not to bolt on RSI/MACD until) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 92.36614 Tm (winrate rises. The goal is to test whether a small number of conceptually aligned confirmations) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 81.86614 Tm (improve robustness without overfit.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 66.36614 Tm (Allowed later research families:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 55.86614 Tm (A. Exhaustion confirmation:) Tj T* ET
+BT /F1 8 Tf 9.6 TL ET
+BT 1 0 0 1 388.636 28.34646 Tm (TM Trading V9.2 Master Roadmap - Page 2) Tj T* ET
+ 
+endstream
+endobj
+12 0 obj
+<<
+/Length 3995
+>>
+stream
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 790.8661 Tm (- RSI divergence near rolling low) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 780.3661 Tm (- ATR/ADR stretch normalization) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 769.8661 Tm (- declining volume after extreme push) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 759.3661 Tm (- candle rejection / close-quality confirmation) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 743.8661 Tm (B. Order-flow confirmation:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 733.3661 Tm (- CVD divergence) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 722.8661 Tm (- delta exhaustion) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 712.3661 Tm (- negative delta into lower low with failed continuation) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 701.8661 Tm (- OFI only when real coverage exists) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 686.3661 Tm (C. Exit refinement:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 675.8661 Tm (- volatility-scaled time exit) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 665.3661 Tm (- ATR emergency stop) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 654.8661 Tm (- MFE/MAE-informed protective stop) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 644.3661 Tm (- no TP/SL curve fitting; Phase 1H already showed TP/SL can clip edge) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 628.8661 Tm (D. Regime boundary improvement:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 618.3661 Tm (- improve EXHAUSTED label, not random confluence stacking) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 607.8661 Tm (- compare central regime classifier against replay fallback parity) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 592.3661 Tm (Anti-overfit rules:) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 581.8661 Tm (- no huge combinatorial sweeps) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 571.3661 Tm (- no optimizing thresholds before reproduction) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 560.8661 Tm (- require walk-forward, de-overlap, yearly split, and cost stress) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 550.3661 Tm (- improvement must hold at cost12 and preferably cost20) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 61.02362 539.8661 Tm (- 2025 cannot be hidden by an overfit no-trade filter) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 524.3661 Tm (12. Codex Prompt: Reproduce C on Real Data) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 510.3661 Tm (Use the merged script. Do not modify source code first. Do not write to production cache paths.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 499.8661 Tm (Extract trade_count, net_expectancy_bps, win_rate, profit_factor, sharpe, max_drawdown_pct,) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 489.3661 Tm (positive_year_count, worst_year, and yearly rows. Compare with Phase 1I. Produce a PASS /) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 478.8661 Tm (INVESTIGATE / FAIL verdict. Do not commit until reviewed.) Tj T* ET
+BT /F2 12 Tf 14.4 TL ET
+BT 1 0 0 1 51.02362 463.3661 Tm (13. Final Operating Principle) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 449.3661 Tm (Do not build the whole trading firm at once. Confirm one edge. Reproduce it. Stress it. Paper) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 438.8661 Tm (trade it. Then add the next layer.) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 423.3661 Tm (Right now the whole project depends on one question: does the merged C replay reproduce Phase 1I) Tj T* ET
+BT /F1 9.2 Tf 11.04 TL ET
+BT 1 0 0 1 51.02362 412.8661 Tm (on real 750 BTC shards?) Tj T* ET
+BT /F1 8 Tf 9.6 TL ET
+BT 1 0 0 1 388.636 28.34646 Tm (TM Trading V9.2 Master Roadmap - Page 3) Tj T* ET
+ 
+endstream
+endobj
+xref
+0 13
+0000000000 65535 f 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000525 00000 n 
+0000000729 00000 n 
+0000000933 00000 n 
+0000001001 00000 n 
+0000001293 00000 n 
+0000001364 00000 n 
+0000008346 00000 n 
+0000015154 00000 n 
+trailer
+<<
+/ID 
+[<7f70a3596b01aaea1b294d23d34f5473><7f70a3596b01aaea1b294d23d34f5473>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 8 0 R
+/Root 7 0 R
+/Size 13
+>>
+startxref
+19201
+%%EOF

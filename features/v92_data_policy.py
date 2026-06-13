@@ -25,29 +25,11 @@ def _period_key(year: str, month: str) -> str:
     return f"{year}-{month}"
 
 
-def discover_aggtrade_archives(
-    search_dir: Path,
-    symbol: str,
-    overlap_policy: str = "monthly_wins",
-) -> list[Path]:
-    """
-    Discover Binance aggTrade ZIP archives with an explicit overlap policy.
-
-    Supported policies:
-    - monthly_wins: if YYYY-MM monthly exists, exclude all YYYY-MM-DD daily files.
-    - daily_wins: if any YYYY-MM-DD daily file exists, exclude the YYYY-MM monthly file.
-    - reject_overlap: raise ValueError when monthly and daily files coexist for a month.
-
-    Unsupported files matching the symbol aggTrades ZIP prefix raise ValueError so the
-    builder cannot silently process ambiguous archives such as *_1m.zip variants.
-    """
+def _discover_aggtrade_inventory(search_dir: Path, symbol: str) -> dict:
     search_dir = Path(search_dir)
-    if overlap_policy not in {"monthly_wins", "daily_wins", "reject_overlap"}:
-        raise ValueError(f"Unsupported overlap_policy={overlap_policy!r}")
-
     monthly: dict[str, Path] = {}
     daily: dict[str, list[Path]] = {}
-    unsupported: list[Path] = []
+    unsupported: list[str] = []
 
     prefix = f"{symbol}-aggTrades-"
     for path in sorted(search_dir.glob(f"{prefix}*.zip")):
@@ -62,15 +44,82 @@ def discover_aggtrade_archives(
             period = _period_key(daily_match.group("year"), daily_match.group("month"))
             daily.setdefault(period, []).append(path)
         else:
-            unsupported.append(path)
-
-    if unsupported:
-        names = ", ".join(p.name for p in unsupported)
-        raise ValueError(f"Unsupported aggTrade archive filenames: {names}")
+            unsupported.append(name)
 
     overlapping = sorted(set(monthly).intersection(daily))
-    if overlapping and overlap_policy == "reject_overlap":
-        raise ValueError(f"Overlapping monthly/daily aggTrade archives: {', '.join(overlapping)}")
+    return {
+        "selected_archives": [],
+        "selected_archive_count": 0,
+        "rejected_overlaps": overlapping,
+        "unsupported_filenames": unsupported,
+        "errors": [],
+        "_monthly": monthly,
+        "_daily": daily,
+    }
+
+
+def _discover_tier2_inventory(tier2_dir: Path, symbol: str) -> dict:
+    tier2_dir = Path(tier2_dir)
+    all_re = re.compile(TIER2_ALL_RE_TEMPLATE.format(symbol=re.escape(symbol)))
+    shard_re = re.compile(TIER2_SHARD_RE_TEMPLATE.format(symbol=re.escape(symbol)))
+
+    candidates = sorted(tier2_dir.glob(f"{symbol}_tier2_500btc_*.parquet"))
+    all_files = [p for p in candidates if all_re.match(p.name)]
+    shard_files = [p for p in candidates if shard_re.match(p.name) and not all_re.match(p.name)]
+
+    return {
+        "selected_tier2_files": [],
+        "selected_tier2_count": 0,
+        "all_files": all_files,
+        "shard_files": shard_files,
+        "errors": [],
+    }
+
+
+def discover_aggtrade_archives(
+    search_dir: Path,
+    symbol: str,
+    overlap_policy: str = "monthly_wins",
+    return_manifest: bool = False,
+) -> list[Path]:
+    """
+    Discover Binance aggTrade ZIP archives with an explicit overlap policy.
+
+    Supported policies:
+    - monthly_wins: if YYYY-MM monthly exists, exclude all YYYY-MM-DD daily files.
+    - daily_wins: if any YYYY-MM-DD daily file exists, exclude the YYYY-MM monthly file.
+    - reject_overlap: raise ValueError when monthly and daily files coexist for a month.
+
+    Unsupported files matching the symbol aggTrades ZIP prefix raise ValueError so the
+    builder cannot silently process ambiguous archives such as *_1m.zip variants.
+    """
+    if overlap_policy not in {"monthly_wins", "daily_wins", "reject_overlap"}:
+        if return_manifest:
+            inventory = _discover_aggtrade_inventory(search_dir, symbol)
+            inventory["errors"].append(f"Unsupported overlap_policy={overlap_policy!r}")
+            return inventory
+        raise ValueError(f"Unsupported overlap_policy={overlap_policy!r}")
+
+    inventory = _discover_aggtrade_inventory(search_dir, symbol)
+    monthly = inventory["_monthly"]
+    daily = inventory["_daily"]
+
+    if inventory["unsupported_filenames"] and not return_manifest:
+        names = ", ".join(inventory["unsupported_filenames"])
+        raise ValueError(f"Unsupported aggTrade archive filenames: {names}")
+
+    if inventory["unsupported_filenames"] and return_manifest:
+        inventory["errors"].append(
+            "Unsupported aggTrade archive filenames: " + ", ".join(inventory["unsupported_filenames"])
+        )
+
+    if inventory["rejected_overlaps"] and overlap_policy == "reject_overlap":
+        if return_manifest:
+            inventory["errors"].append(
+                "Overlapping monthly/daily aggTrade archives: " + ", ".join(inventory["rejected_overlaps"])
+            )
+            return inventory
+        raise ValueError(f"Overlapping monthly/daily aggTrade archives: {', '.join(inventory['rejected_overlaps'])}")
 
     selected: list[Path] = []
     all_periods = sorted(set(monthly).union(daily))
@@ -89,13 +138,19 @@ def discover_aggtrade_archives(
         elif has_daily:
             selected.extend(sorted(daily[period]))
 
-    return sorted(selected)
+    selected = sorted(selected)
+    if return_manifest:
+        inventory["selected_archives"] = selected
+        inventory["selected_archive_count"] = len(selected)
+        return inventory
+    return selected
 
 
 def discover_tier2_bar_files(
     tier2_dir: Path,
     symbol: str = "BTCUSDT",
     all_mode: str = "all_wins",
+    return_manifest: bool = False,
 ) -> list[Path]:
     """
     Discover V9.2 Tier-2 bar parquet files with explicit _ALL vs shard policy.
@@ -105,30 +160,43 @@ def discover_tier2_bar_files(
     - shards_only: ignore _ALL and return period shards only.
     - reject_mixed: raise ValueError when _ALL and shards coexist.
     """
-    tier2_dir = Path(tier2_dir)
     if all_mode not in {"all_wins", "shards_only", "reject_mixed"}:
+        if return_manifest:
+            inventory = _discover_tier2_inventory(tier2_dir, symbol)
+            inventory["errors"].append(f"Unsupported all_mode={all_mode!r}")
+            return inventory
         raise ValueError(f"Unsupported all_mode={all_mode!r}")
 
-    all_re = re.compile(TIER2_ALL_RE_TEMPLATE.format(symbol=re.escape(symbol)))
-    shard_re = re.compile(TIER2_SHARD_RE_TEMPLATE.format(symbol=re.escape(symbol)))
-
-    candidates = sorted(tier2_dir.glob(f"{symbol}_tier2_500btc_*.parquet"))
-    all_files = [p for p in candidates if all_re.match(p.name)]
-    shard_files = [p for p in candidates if shard_re.match(p.name) and not all_re.match(p.name)]
+    inventory = _discover_tier2_inventory(tier2_dir, symbol)
+    all_files = inventory["all_files"]
+    shard_files = inventory["shard_files"]
 
     if len(all_files) > 1:
+        if return_manifest:
+            inventory["errors"].append(f"Multiple _ALL parquet files found for {symbol}")
+            return inventory
         raise ValueError(f"Multiple _ALL parquet files found for {symbol}")
 
     has_all = bool(all_files)
     has_shards = bool(shard_files)
 
     if has_all and has_shards and all_mode == "reject_mixed":
+        if return_manifest:
+            inventory["errors"].append(f"Mixed _ALL and shard Tier-2 files found for {symbol}")
+            return inventory
         raise ValueError(f"Mixed _ALL and shard Tier-2 files found for {symbol}")
     if has_all and all_mode == "all_wins":
-        return all_files
-    if all_mode == "shards_only":
-        return shard_files
-    return all_files if has_all else shard_files
+        selected = all_files
+    elif all_mode == "shards_only":
+        selected = shard_files
+    else:
+        selected = all_files if has_all else shard_files
+
+    if return_manifest:
+        inventory["selected_tier2_files"] = selected
+        inventory["selected_tier2_count"] = len(selected)
+        return inventory
+    return selected
 
 
 def epoch_to_datetime_expr(column: str) -> pl.Expr:

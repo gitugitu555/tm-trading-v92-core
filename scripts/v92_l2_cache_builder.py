@@ -81,8 +81,10 @@ def process_hour(zst_path: Path) -> str:
     
     return f"[{date_str} {hour_str}:00] Success: Saved {len(pl_bars)} 1-second OFI bars."
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
 def main():
-    print("V9.2 L2 OFI Cache Builder Started.")
+    print("V9.2 L2 OFI Cache Builder Started (Parallelized).")
     print(f"Cold Source: {COLD_ROOT}")
     print(f"Hot Target:  {HOT_OUT}\n")
     
@@ -94,10 +96,16 @@ def main():
     
     print(f"Found {len(files)} total hours of L2 data to process.")
     
-    # Process sequentially to keep memory strictly under 2GB
+    # We are reverting to pure sequential processing because the 2026 bull market 
+    # ticks are so insanely dense that even 4 workers trigger the OOM-killer.
+    print(f"Using sequential processing for maximum memory safety...")
+    
     for fp in files:
-        result = process_hour(Path(fp))
-        print(result)
+        try:
+            result = process_hour(Path(fp))
+            print(result)
+        except Exception as exc:
+            print(f"File generated an exception: {exc}")
         
     print("L2 OFI Cache Build Complete.")
 

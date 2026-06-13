@@ -3,6 +3,7 @@
 V9.2 Alpha OFI Strategy Tester
 Tests the OFI Absorption signal gated by the Regime Classifier.
 Includes native rigorous statistical diagnostics (t-stat, CI, out-of-sample).
+Updated to use lazy chunked streaming, VPIN gating, anti-patterns, and session filters.
 """
 
 import sys
@@ -12,11 +13,16 @@ import polars as pl
 from pathlib import Path
 from numba import njit
 import math
+from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from features.regime_classifier import add_regime_labels
+from features.session_filter import SessionFilter
+from features.vpin_gate import VPINGate
+from features.anti_pattern_gate import check_branch_a_anti_patterns, check_branch_c_anti_patterns
+from features.close_quality import BRANCH_A_MIN_CLOSE_QUALITY, BRANCH_B_MIN_CLOSE_QUALITY, BRANCH_C_MAX_CLOSE_QUALITY
 
 COSTS_BPS = 5.0
 BOOTSTRAP_SAMPLES = 1000
@@ -61,138 +67,218 @@ def calculate_stats(df: pd.DataFrame, prefix: str = ""):
     
     return f"{prefix} Count: {n:<4} | Mean Net: {mean_net:>6.2f} bps | Median Net: {median:>6.2f} bps | t-stat: {t_stat:>5.2f} | 95% CI: [{ci_low:>6.2f}, {ci_high:>6.2f}]{warning}"
 
-def evaluate_branch_events(df_pd: pd.DataFrame, events_list: list):
-    """Evaluates signals for Branches A, B, and C."""
-    
-    # Pre-calculate quantiles for Branch thresholds (rolling to prevent forward leakage)
-    # Actually, using global quantiles introduces mild future leakage if used across the whole set.
-    # To be extremely strict, we could use rolling percentiles, but for rapid prototyping of the logic,
-    # we'll use pandas expanding quantiles or just standard rolling max/min approximations.
-    
-    df_pd['vol_delta_roll_90'] = df_pd['volume_delta'].rolling(1000).quantile(0.90)
-    df_pd['vol_delta_roll_10'] = df_pd['volume_delta'].rolling(1000).quantile(0.10)
-    
-    df_pd['vol_roll_95'] = df_pd['volume'].rolling(1000).quantile(0.95)
-    
-    df_pd['local_high'] = df_pd['high'].rolling(50).max()
-    df_pd['local_low'] = df_pd['low'].rolling(50).min()
-    
-    # We only care about extreme OFI prints for Branch B
-    if 'bar_ofi' in df_pd.columns:
-        df_pd['ofi_roll_90'] = df_pd['bar_ofi'].rolling(1000).quantile(0.90)
-        df_pd['ofi_roll_10'] = df_pd['bar_ofi'].rolling(1000).quantile(0.10)
-
-    # Calculate forward returns (e.g. 24 bars)
-    horizon = 24
-    df_pd['fwd_close'] = df_pd['close'].shift(-horizon)
-    df_pd['raw_return'] = (df_pd['fwd_close'] - df_pd['close']) / df_pd['close']
-    
-    df_pd = df_pd.dropna(subset=['fwd_close', 'vol_delta_roll_90'])
-    
-    for idx, row in df_pd.iterrows():
-        regime = row['regime']
-        
-        # --- BRANCH A (Breakout / Trend Follow) ---
-        # Low volatility build-up leads to expansion. Look for aggressive taker flow breakout.
-        if regime == "TREND_BUILDUP":
-            side_a = 0
-            if row['volume_delta'] > row['vol_delta_roll_90'] and row['close'] >= row['local_high']:
-                side_a = 1
-            elif row['volume_delta'] < row['vol_delta_roll_10'] and row['close'] <= row['local_low']:
-                side_a = -1
-            if side_a != 0:
-                events_list.append({"branch": "A_Breakout", "datetime": row['datetime_close'], "regime": regime, "side": side_a, "raw_return": row['raw_return'], "signed_return_bps": side_a * row['raw_return'] * 10_000})
-                
-        # --- BRANCH B (OFI Absorption) ---
-        # Gated primarily for ABSORPTION regime, but we'll collect it across all to prove the filter works.
-        if 'bar_ofi' in row and not pd.isna(row['bar_ofi']):
-            side_b = 0
-            # If massive sell OFI but price holds (not breaking low) -> Buy (Absorption)
-            if row['bar_ofi'] < row['ofi_roll_10'] and row['close'] > row['local_low']:
-                side_b = 1
-            # If massive buy OFI but price holds (not breaking high) -> Sell (Absorption)
-            elif row['bar_ofi'] > row['ofi_roll_90'] and row['close'] < row['local_high']:
-                side_b = -1
-            if side_b != 0:
-                events_list.append({"branch": "B_Absorption", "datetime": row['datetime_close'], "regime": regime, "side": side_b, "raw_return": row['raw_return'], "signed_return_bps": side_b * row['raw_return'] * 10_000})
-                
-        # --- BRANCH C (Exhaustion Fade) ---
-        # Gated for EXHAUSTED regime. Look for extreme volume spike (liquidation cascade) to fade.
-        if regime == "EXHAUSTED":
-            side_c = 0
-            # Massive volume at local highs -> Exhaustion Top -> Short
-            if row['volume'] > row['vol_roll_95'] and row['close'] >= row['local_high']:
-                side_c = -1
-            # Massive volume at local lows -> Exhaustion Bottom -> Long
-            elif row['volume'] > row['vol_roll_95'] and row['close'] <= row['local_low']:
-                side_c = 1
-            if side_c != 0:
-                events_list.append({"branch": "C_ExhaustionFade", "datetime": row['datetime_close'], "regime": regime, "side": side_c, "raw_return": row['raw_return'], "signed_return_bps": side_c * row['raw_return'] * 10_000})
-
 
 def main():
-    print("1. Loading 500-BTC Base Bars & Applying Regime Classifier...")
+    print("1. Identifying 500-BTC Base Bars...")
     tier2_dir = ROOT / "data/hft/tier2"
-    bar_files = sorted(tier2_dir.glob("BTCUSDT_tier2_500btc_*.parquet"))
+    bar_files = sorted(list(tier2_dir.glob("BTCUSDT_tier2_500btc_*.parquet")))
     
     if not bar_files:
         print("No Volume Bar files found.")
         return
         
-    df_bars_pl = pl.concat([pl.scan_parquet(f) for f in bar_files]).collect()
-    df_bars_pl = df_bars_pl.sort("open_time")
+    lazy_df = pl.concat([pl.scan_parquet(f) for f in bar_files])
     
-    # Apply regime classifier
-    df_bars_pl = add_regime_labels(df_bars_pl)
-    
-    # Convert timestamps to align (handling mixed ms/us Binance epochs)
-    df_bars_pl = df_bars_pl.with_columns([
-        pl.when(pl.col("open_time") > 1e14)
-          .then(pl.from_epoch("open_time", time_unit="us"))
-          .otherwise(pl.from_epoch("open_time", time_unit="ms")).cast(pl.Datetime("ns")).alias("datetime_open"),
-        pl.when(pl.col("close_time") > 1e14)
-          .then(pl.from_epoch("close_time", time_unit="us"))
-          .otherwise(pl.from_epoch("close_time", time_unit="ms")).cast(pl.Datetime("ns")).alias("datetime_close")
-    ])
-    
-    print("2. Loading Available 1-Second OFI Cache...")
+    # Check OFI Cache
     ofi_dir = ROOT / "data/hft/tier2/ofi"
-    ofi_files = sorted(ofi_dir.glob("BTCUSDT_ofi_1s_*.parquet"))
-    
-    df_full = df_bars_pl
+    ofi_files = sorted(list(ofi_dir.glob("BTCUSDT_ofi_1s_*.parquet")))
+    df_ofi_pl = None
+    has_ofi = False
     
     if ofi_files:
-        print(f"   -> Found {len(ofi_files)} OFI hour-files. Loading and assembling...")
+        print(f"2. Found {len(ofi_files)} OFI hour-files. Loading and assembling...")
         df_ofi_pl = pl.concat([pl.read_parquet(f) for f in ofi_files])
-        
-        # Sort and calculate cumulative OFI to enable instantaneous bar accumulation math
         df_ofi_pl = df_ofi_pl.sort("datetime").with_columns(
-            pl.col("ofi").cum_sum().alias("cumulative_ofi")
+            pl.col("ofi").cum_sum().alias("cumulative_ofi"),
+            pl.col("datetime").cast(pl.Datetime("ns"))
         )
-        
-        print("3. AsOf Joining OFI to Volume Bars...")
-        df_ofi_pl = df_ofi_pl.with_columns(pl.col("datetime").cast(pl.Datetime("ns")))
-        
-        df_join_open = df_bars_pl.join_asof(df_ofi_pl.select(["datetime", "cumulative_ofi"]), left_on="datetime_open", right_on="datetime", strategy="backward")
-        df_join_open = df_join_open.rename({"cumulative_ofi": "ofi_at_open"}).drop("datetime")
-        
-        df_join_open = df_join_open.sort("datetime_close")
-        df_full = df_join_open.join_asof(df_ofi_pl.select(["datetime", "cumulative_ofi"]), left_on="datetime_close", right_on="datetime", strategy="backward")
-        df_full = df_full.rename({"cumulative_ofi": "ofi_at_close"}).drop("datetime")
-        
-        # Total OFI accumulated during this volume bar
-        df_full = df_full.with_columns(
-            (pl.col("ofi_at_close") - pl.col("ofi_at_open")).alias("bar_ofi")
-        )
+        has_ofi = True
     else:
-        print("   -> No OFI files found. Skipping Branch B (Absorption) generation.")
+        print("2. No OFI files found. Skipping Branch B (Absorption) generation.")
         
-    print(f"   -> Executing strategy logic across {len(df_full)} bars...")
-    df_pd = df_full.to_pandas()
+    print("3. Executing chunked strategy pipeline (Memory Optimized)...")
+    
+    CHUNK_SIZE = 250_000
+    LOOKBACK = 15_500
+    HORIZON_BARS = 24
     
     events = []
-    evaluate_branch_events(df_pd, events)
     
+    session_filter = SessionFilter()
+    vpin_gate = VPINGate()
+    
+    blocked_stats = {
+        "session_filter": 0,
+        "vpin_gate": 0,
+        "anti_pattern": 0,
+        "close_quality": 0,
+        "blocked_reasons": {}
+    }
+    
+    i = 0
+    while True:
+        start_idx = max(0, i - LOOKBACK)
+        request_len = i + CHUNK_SIZE + HORIZON_BARS - start_idx
+        
+        chunk_df = lazy_df.slice(start_idx, request_len).collect()
+        if chunk_df.height == 0:
+            break
+            
+        chunk_df = add_regime_labels(chunk_df)
+        
+        # Align timestamps identically to original logic
+        chunk_df = chunk_df.with_columns([
+            pl.when(pl.col("open_time") > 1e14)
+              .then(pl.from_epoch("open_time", time_unit="us"))
+              .otherwise(pl.from_epoch("open_time", time_unit="ms")).cast(pl.Datetime("ns")).alias("datetime_open"),
+            pl.when(pl.col("close_time") > 1e14)
+              .then(pl.from_epoch("close_time", time_unit="us"))
+              .otherwise(pl.from_epoch("close_time", time_unit="ms")).cast(pl.Datetime("ns")).alias("datetime_close")
+        ])
+        
+        if has_ofi:
+            chunk_df = chunk_df.join_asof(df_ofi_pl.select(["datetime", "cumulative_ofi"]), left_on="datetime_open", right_on="datetime", strategy="backward")
+            chunk_df = chunk_df.rename({"cumulative_ofi": "ofi_at_open"}).drop("datetime")
+            
+            chunk_df = chunk_df.join_asof(df_ofi_pl.select(["datetime", "cumulative_ofi"]), left_on="datetime_close", right_on="datetime", strategy="backward")
+            chunk_df = chunk_df.rename({"cumulative_ofi": "ofi_at_close"}).drop("datetime")
+            
+            chunk_df = chunk_df.with_columns(
+                (pl.col("ofi_at_close") - pl.col("ofi_at_open")).alias("bar_ofi")
+            )
+            
+        rolling_cols = [
+            pl.col("high").rolling_max(window_size=50).shift(1).alias("local_high"),
+            pl.col("low").rolling_min(window_size=50).shift(1).alias("local_low"),
+            pl.col("volume_delta").rolling_quantile(0.90, interpolation="nearest", window_size=1000).shift(1).alias("vol_delta_roll_90"),
+            pl.col("volume_delta").rolling_quantile(0.10, interpolation="nearest", window_size=1000).shift(1).alias("vol_delta_roll_10"),
+            pl.col("volume").rolling_quantile(0.95, interpolation="nearest", window_size=1000).shift(1).alias("vol_roll_95"),
+            pl.col("close").shift(-HORIZON_BARS).alias("fwd_close")
+        ]
+        
+        if has_ofi:
+            rolling_cols.extend([
+                pl.col("bar_ofi").rolling_quantile(0.90, interpolation="nearest", window_size=1000).shift(1).alias("ofi_roll_90"),
+                pl.col("bar_ofi").rolling_quantile(0.10, interpolation="nearest", window_size=1000).shift(1).alias("ofi_roll_10")
+            ])
+            
+        chunk_df = chunk_df.with_columns(rolling_cols)
+        
+        chunk_df = chunk_df.with_columns([
+            ((pl.col("fwd_close") - pl.col("close")) / pl.col("close")).alias("raw_return")
+        ])
+        
+        primary_start = i - start_idx
+        process_df = chunk_df.slice(primary_start, CHUNK_SIZE)
+        if process_df.height == 0:
+            break
+            
+        process_df = process_df.drop_nulls()
+        
+        for row in process_df.iter_rows(named=True):
+            buy_volume = (row["volume"] + row["volume_delta"]) / 2.0
+            sell_volume = (row["volume"] - row["volume_delta"]) / 2.0
+            vpin_info = vpin_gate.update(buy_volume, sell_volume)
+            
+            # Reconstruct datetime for session filter and analysis
+            timestamp_ms = row["open_time"]
+            dt = datetime.fromtimestamp(timestamp_ms / 1000.0, tz=timezone.utc)
+            utc_hour = dt.hour
+            regime = row["regime"]
+            
+            is_branch_a_setup = regime == "TREND_BUILDUP" and \
+                                ((row["volume_delta"] > row["vol_delta_roll_90"] and row["close"] >= row["local_high"]) or \
+                                 (row["volume_delta"] < row["vol_delta_roll_10"] and row["close"] <= row["local_low"]))
+                                 
+            is_branch_b_setup = False
+            if has_ofi:
+                is_branch_b_setup = regime == "ABSORPTION" and \
+                                    ((row["bar_ofi"] < row["ofi_roll_10"] and row["close"] > row["local_low"]) or \
+                                     (row["bar_ofi"] > row["ofi_roll_90"] and row["close"] < row["local_high"]))
+                                     
+            is_branch_c_setup = regime == "EXHAUSTED" and \
+                                ((row["volume"] > row["vol_roll_95"] and row["close"] <= row["local_low"]) or \
+                                 (row["volume"] > row["vol_roll_95"] and row["close"] >= row["local_high"]))
+
+            branch = None
+            side = None
+            
+            if is_branch_a_setup:
+                branch = "A_Breakout"
+                side = "LONG" if row["volume_delta"] > 0 else "SHORT"
+                if not session_filter.is_eligible(utc_hour, branch):
+                    blocked_stats["session_filter"] += 1
+                    continue
+                if vpin_info["should_block_branch_a"]:
+                    blocked_stats["vpin_gate"] += 1
+                    continue
+                    
+                close_quality = row.get("close_quality", 0.5)
+                if side == "LONG" and close_quality < BRANCH_A_MIN_CLOSE_QUALITY:
+                    blocked_stats["close_quality"] += 1
+                    continue
+                elif side == "SHORT" and close_quality > (1.0 - BRANCH_A_MIN_CLOSE_QUALITY):
+                    blocked_stats["close_quality"] += 1
+                    continue
+                    
+                block, reasons = check_branch_a_anti_patterns(row, side)
+                if block:
+                    blocked_stats["anti_pattern"] += 1
+                    for r in reasons:
+                        blocked_stats["blocked_reasons"][r] = blocked_stats["blocked_reasons"].get(r, 0) + 1
+                    continue
+                    
+            elif is_branch_b_setup:
+                branch = "B_Absorption"
+                side = "LONG" if row["bar_ofi"] < 0 else "SHORT"
+                if not session_filter.is_eligible(utc_hour, branch):
+                    blocked_stats["session_filter"] += 1
+                    continue
+                if vpin_info["should_block_branch_b"]:
+                    blocked_stats["vpin_gate"] += 1
+                    continue
+                    
+                close_quality = row.get("close_quality", 0.5)
+                if side == "LONG" and close_quality < BRANCH_B_MIN_CLOSE_QUALITY:
+                    blocked_stats["close_quality"] += 1
+                    continue
+                elif side == "SHORT" and close_quality > (1.0 - BRANCH_B_MIN_CLOSE_QUALITY):
+                    blocked_stats["close_quality"] += 1
+                    continue
+                    
+            elif is_branch_c_setup:
+                branch = "C_ExhaustionFade"
+                side = "LONG" if row["close"] <= row["local_low"] else "SHORT"
+                if not session_filter.is_eligible(utc_hour, branch):
+                    blocked_stats["session_filter"] += 1
+                    continue
+                if row.get("close_quality", 1) > BRANCH_C_MAX_CLOSE_QUALITY:
+                    blocked_stats["close_quality"] += 1
+                    continue
+                    
+                block, reasons = check_branch_c_anti_patterns(row)
+                if block:
+                    blocked_stats["anti_pattern"] += 1
+                    for r in reasons:
+                        blocked_stats["blocked_reasons"][r] = blocked_stats["blocked_reasons"].get(r, 0) + 1
+                    continue
+                    
+            if branch:
+                sign = 1 if side == "LONG" else -1
+                events.append({
+                    "branch": branch,
+                    "side": side,
+                    "datetime": dt, # Use native datetime for Pandas
+                    "regime": row["regime"],
+                    "raw_return": row["raw_return"],
+                    "signed_return_bps": (sign * row["raw_return"] * 10000)
+                })
+                
+        if chunk_df.height < request_len:
+            break
+            
+        i += CHUNK_SIZE
+
     df_events = pd.DataFrame(events)
     if len(df_events) == 0:
         print("No events fired based on the thresholds.")
@@ -232,6 +318,8 @@ def main():
             print("    " + calculate_stats(oos_df.iloc[half_idx:], prefix="[Second Half]"))
         else:
             print(f"    Not enough events for a meaningful OOS split (Count: {len(oos_df)})")
+            
+    print(f"\nBlocked Stats: {blocked_stats}")
 
 if __name__ == "__main__":
     main()

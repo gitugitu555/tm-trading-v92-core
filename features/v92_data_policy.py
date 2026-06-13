@@ -114,7 +114,7 @@ def discover_tier2_bar_files(
 
     candidates = sorted(tier2_dir.glob(f"{symbol}_tier2_500btc_*.parquet"))
     all_files = [p for p in candidates if all_re.match(p.name)]
-    shard_files = [p for p in candidates if shard_re.match(p.name)]
+    shard_files = [p for p in candidates if shard_re.match(p.name) and not all_re.match(p.name)]
 
     if len(all_files) > 1:
         raise ValueError(f"Multiple _ALL parquet files found for {symbol}")

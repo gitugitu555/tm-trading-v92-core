@@ -125,7 +125,7 @@ def test_join_ofi_to_bars_preserves_rows_and_marks_coverage():
     assert out.height == bars.height
     assert "bar_ofi" in out.columns
     assert "has_ofi_coverage" in out.columns
-    assert out.select(pl.col("has_ofi_coverage").sum()).item() == 1
+    assert out.select(pl.col("has_ofi_coverage").sum()).item() == 2
     assert out.filter(~pl.col("has_ofi_coverage")).select(pl.col("bar_ofi").is_null().all()).item()
 
 

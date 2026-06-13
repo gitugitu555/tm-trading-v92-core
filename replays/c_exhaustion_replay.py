@@ -200,31 +200,50 @@ def attach_c_exhaustion_signal(
     df: pl.DataFrame | pd.DataFrame,
     *,
     signal_lookback_bars: int = 50,
+    volume_lookback_bars: int = 1000,
 ) -> pl.DataFrame:
     """Attach the past-only C signal used by the deterministic replay.
 
-    The signal fires when the bar is in EXHAUSTED regime and the close is at or
-    below the prior rolling low. The lookback excludes the current bar.
+    The signal matches the original Branch C research trigger:
+    - regime == EXHAUSTED
+    - volume > vol_roll_95
+    - close <= local_low
+
+    `local_low` is a shifted rolling low, while `vol_roll_95` is the rolling
+    95th percentile used by the research script. No future data is used.
     """
     frame = _ensure_polars_frame(df).sort("open_time")
     frame = _normalize_bar_times(frame)
 
-    required = {"open", "high", "low", "close", "regime", "open_time", "close_time"}
+    if "regime" not in frame.columns:
+        frame = _add_regime_labels(frame)
+
+    required = {"open", "high", "low", "close", "volume", "regime", "open_time", "close_time"}
     missing = required.difference(frame.columns)
     if missing:
         raise ValueError(f"Missing required columns: {sorted(missing)}")
 
-    if "regime" not in frame.columns:
-        frame = _add_regime_labels(frame)
+    threshold_min_periods = max(1, min(3, volume_lookback_bars))
+    structure_min_periods = max(1, min(2, signal_lookback_bars))
 
     frame = frame.with_columns(
-        pl.col("low").rolling_min(window_size=signal_lookback_bars, min_samples=1).shift(1).alias("prior_rolling_low")
+        [
+            pl.col("volume")
+            .rolling_quantile(quantile=0.95, interpolation="linear", window_size=volume_lookback_bars, min_samples=threshold_min_periods)
+            .alias("vol_roll_95"),
+            pl.col("low")
+            .rolling_min(window_size=signal_lookback_bars, min_samples=structure_min_periods)
+            .shift(1)
+            .alias("local_low"),
+        ]
     )
     frame = frame.with_columns(
         (
             (pl.col("regime") == "EXHAUSTED")
-            & pl.col("prior_rolling_low").is_not_null()
-            & (pl.col("close") <= pl.col("prior_rolling_low"))
+            & pl.col("vol_roll_95").is_not_null()
+            & pl.col("local_low").is_not_null()
+            & (pl.col("volume") > pl.col("vol_roll_95"))
+            & (pl.col("close") <= pl.col("local_low"))
         ).alias("c_signal")
     )
     return frame
@@ -268,6 +287,7 @@ def replay_c_exhaustionfade(
     horizon_bars: int = 36,
     round_trip_cost_bps: float = 5.0,
     signal_lookback_bars: int = 50,
+    volume_lookback_bars: int = 1000,
     bar_size: int = 750,
 ) -> CExhaustionReplayResult:
     """Replay the C_ExhaustionFade long-only strategy with deterministic timing."""
@@ -278,7 +298,11 @@ def replay_c_exhaustionfade(
         bar_size=bar_size,
     )
 
-    frame = attach_c_exhaustion_signal(df, signal_lookback_bars=signal_lookback_bars)
+    frame = attach_c_exhaustion_signal(
+        df,
+        signal_lookback_bars=signal_lookback_bars,
+        volume_lookback_bars=volume_lookback_bars,
+    )
     pdf = frame.to_pandas()
     pdf = pdf.sort_values("open_time").reset_index(drop=True)
 
